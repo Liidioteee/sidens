@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>SiDeNs — Скоро открытие</title>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;900&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --primary-lime: #b6ff00;
+            --secondary-green: #32cd32;
+            --dark-bg: #070b08;
+            --text-light: #f0fdf4;
+            --text-muted: #94a3b8;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            /* Убираем синее выделение при тапе на мобильных */
+            -webkit-tap-highlight-color: transparent; 
+        }
+
+        body {
+            font-family: 'Montserrat', sans-serif;
+            background-color: var(--dark-bg);
+            background-image: radial-gradient(circle at center, #0f1811 0%, var(--dark-bg) 100%);
+            color: var(--text-light);
+            /* Используем dvh для идеального отображения на мобильных (игнорирует адресную строку) */
+            min-height: 100dvh; 
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            position: relative;
+            cursor: crosshair;
+        }
+
+        /* Интерактивные пятна света */
+        .glow {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(100px);
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        .glow-cursor {
+            width: 40vw;
+            height: 40vw;
+            min-width: 250px;
+            min-height: 250px;
+            background: radial-gradient(circle, var(--primary-lime) 0%, transparent 70%);
+            top: 0;
+            left: 0;
+            transform: translate(-50%, -50%);
+            opacity: 0.2;
+            mix-blend-mode: screen;
+            transition: opacity 0.3s ease; /* Для плавного появления/исчезновения на тач-устройствах */
+        }
+
+        .glow-ambient {
+            width: 60vw;
+            height: 60vw;
+            min-width: 300px;
+            min-height: 300px;
+            background: var(--secondary-green);
+            bottom: -20%;
+            right: -10%;
+            animation: breathe 8s ease-in-out infinite alternate;
+            opacity: 0.15;
+        }
+
+        /* Тонкая сетка на фоне */
+        .grid-overlay {
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background-size: 50px 50px;
+            background-image: linear-gradient(to right, rgba(182, 255, 0, 0.03) 1px, transparent 1px),
+                              linear-gradient(to bottom, rgba(182, 255, 0, 0.03) 1px, transparent 1px);
+            z-index: 2;
+            pointer-events: none;
+        }
+
+        /* Эффект волны при клике/тапе */
+        .click-ripple {
+            position: fixed;
+            border-radius: 50%;
+            border: 2px solid var(--primary-lime);
+            box-shadow: 0 0 20px var(--primary-lime), inset 0 0 20px var(--primary-lime);
+            pointer-events: none;
+            z-index: 10;
+            animation: ripple-anim 0.8s cubic-bezier(0.1, 0.8, 0.3, 1) forwards;
+        }
+
+        @keyframes ripple-anim {
+            0% { width: 0; height: 0; opacity: 1; transform: translate(-50%, -50%); }
+            100% { width: 300px; height: 300px; opacity: 0; transform: translate(-50%, -50%); }
+        }
+
+        /* Основной контейнер с 3D перспективой */
+        .scene {
+            position: relative;
+            z-index: 3;
+            width: 100vw;
+            height: 100dvh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            perspective: 1000px; /* Уменьшена перспектива для лучшего эффекта на мобилках */
+        }
+
+        .content {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            padding: 2rem;
+            transform-style: preserve-3d;
+            /* Плавность для возврата контента после клика */
+            transition: transform 0.1s linear; 
+        }
+
+        .logo {
+            font-size: clamp(2rem, 5vw, 2.5rem);
+            font-weight: 900;
+            letter-spacing: 4px;
+            background: linear-gradient(45deg, var(--primary-lime), var(--secondary-green));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-transform: uppercase;
+            margin-bottom: 3rem;
+            transform: translateZ(50px);
+        }
+
+        h1 {
+            font-size: clamp(3rem, 10vw, 6rem);
+            font-weight: 900;
+            line-height: 1.1;
+            margin-bottom: 1.5rem;
+            letter-spacing: -2px;
+            transform: translateZ(80px);
+            text-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
+
+        .highlight {
+            color: var(--primary-lime);
+            position: relative;
+            display: inline-block;
+        }
+
+        p {
+            font-size: clamp(1rem, 3vw, 1.2rem);
+            color: var(--text-muted);
+            margin-bottom: 3rem;
+            line-height: 1.6;
+            max-width: 500px;
+            transform: translateZ(30px);
+        }
+
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 12px;
+            padding: 1rem 2rem;
+            border-radius: 50px;
+            background: rgba(182, 255, 0, 0.05);
+            border: 1px solid rgba(182, 255, 0, 0.2);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            color: var(--primary-lime);
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            font-size: clamp(0.75rem, 2vw, 0.9rem);
+            transform: translateZ(60px);
+            box-shadow: 0 0 20px rgba(182, 255, 0, 0.1);
+            animation: pulse-border 2s infinite;
+        }
+
+        .dot {
+            width: 10px;
+            height: 10px;
+            background-color: var(--primary-lime);
+            border-radius: 50%;
+            box-shadow: 0 0 10px var(--primary-lime);
+            animation: blink 1.5s infinite alternate;
+        }
+
+        footer {
+            position: absolute;
+            bottom: 2rem;
+            left: 50%;
+            transform: translateX(-50%);
+            color: var(--text-muted);
+            font-size: 0.8rem;
+            letter-spacing: 1px;
+            z-index: 3;
+            opacity: 0.5;
+            width: 100%;
+            text-align: center;
+        }
+
+        /* Анимации */
+        @keyframes breathe {
+            0% { transform: scale(1) translate(0, 0); opacity: 0.1; }
+            50% { transform: scale(1.2) translate(-20px, -20px); opacity: 0.2; }
+            100% { transform: scale(1) translate(0, 0); opacity: 0.1; }
+        }
+
+        @keyframes blink { 0% { opacity: 0.3; } 100% { opacity: 1; } }
+
+        @keyframes pulse-border {
+            0%, 100% { box-shadow: 0 0 20px rgba(182, 255, 0, 0.05); border-color: rgba(182, 255, 0, 0.2); }
+            50% { box-shadow: 0 0 30px rgba(182, 255, 0, 0.2); border-color: rgba(182, 255, 0, 0.5); }
+        }
+
+        /* Оптимизация курсора для мобильных */
+        @media (hover: none) and (pointer: coarse) {
+            body { cursor: default; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="grid-overlay"></div>
+    <div class="glow glow-ambient" id="ambient-glow"></div>
+    <div class="glow glow-cursor" id="cursor-glow"></div>
+
+    <div class="scene">
+        <div class="content" id="parallax-content">
+            <div class="logo">SiDeNs</div>
+            <h1>Скоро <br><span class="highlight">запуск</span></h1>
+            <p>Мы находимся в стадии разработки. Готовим для вас нечто совершенно уникальное и захватывающее.</p>
+            
+            <div class="status-badge">
+                <div class="dot"></div>
+                В процессе создания
+            </div>
+        </div>
+    </div>
+
+    <footer>&copy; 2026 SiDeNs. Все права защищены.</footer>
+
+    <script>
+        const cursorGlow = document.getElementById('cursor-glow');
+        const parallaxContent = document.getElementById('parallax-content');
+        
+        let mouseX = window.innerWidth / 2;
+        let mouseY = window.innerHeight / 2;
+        let glowX = mouseX;
+        let glowY = mouseY;
+        
+        // Переменные для сглаживания 3D (Lerp)
+        let targetRotateX = 0;
+        let targetRotateY = 0;
+        let currentRotateX = 0;
+        let currentRotateY = 0;
+
+        // Проверяем, мобильное ли это устройство
+        const isTouchDevice = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
+
+        if (!isTouchDevice) {
+            // ==========================================
+            // ЛОГИКА ДЛЯ ПК (Без изменений)
+            // ==========================================
+            window.addEventListener('mousemove', (e) => {
+                mouseX = e.clientX;
+                mouseY = e.clientY;
+                
+                const centerX = window.innerWidth / 2;
+                const centerY = window.innerHeight / 2;
+                
+                targetRotateX = ((mouseY - centerY) / centerY) * -10; 
+                targetRotateY = ((mouseX - centerX) / centerX) * 10;
+            });
+        } else {
+            // ==========================================
+            // ЛОГИКА ДЛЯ ТЕЛЕФОНОВ (Новые фишки)
+            // ==========================================
+            
+            // На мобилках изначально прячем пятно света, оно появится при свайпе
+            cursorGlow.style.opacity = '0';
+
+            // 1. Обработка касаний (Свайпы)
+            window.addEventListener('touchmove', (e) => {
+                cursorGlow.style.opacity = '0.3'; // Показываем свет под пальцем
+                mouseX = e.touches[0].clientX;
+                mouseY = e.touches[0].clientY;
+                
+                const centerX = window.innerWidth / 2;
+                const centerY = window.innerHeight / 2;
+                
+                targetRotateX = ((mouseY - centerY) / centerY) * -15; 
+                targetRotateY = ((mouseX - centerX) / centerX) * 15;
+            });
+
+            // Когда палец отпущен, убираем свет и возвращаем контент в центр
+            window.addEventListener('touchend', () => {
+                cursorGlow.style.opacity = '0';
+                targetRotateX = 0;
+                targetRotateY = 0;
+            });
+
+            // 2. Гироскоп (Сайт наклоняется при наклоне самого телефона)
+            window.addEventListener('deviceorientation', (e) => {
+                if (e.beta && e.gamma) {
+                    // Ограничиваем углы наклона, чтобы текст не улетал
+                    let x = e.beta - 45; // Смещение для комфортного удержания телефона
+                    let y = e.gamma;
+                    
+                    targetRotateX = Math.max(-15, Math.min(15, x)) * -0.5;
+                    targetRotateY = Math.max(-15, Math.min(15, y));
+                }
+            });
+        }
+
+        // ==========================================
+        // УНИВЕРСАЛЬНЫЙ ДВИЖОК АНИМАЦИИ (Lerp)
+        // ==========================================
+        function animate() {
+            // Плавный свет
+            glowX += (mouseX - glowX) * (isTouchDevice ? 0.2 : 0.1); 
+            glowY += (mouseY - glowY) * (isTouchDevice ? 0.2 : 0.1);
+            cursorGlow.style.left = `${glowX}px`;
+            cursorGlow.style.top = `${glowY}px`;
+
+            // Плавное 3D вращение
+            currentRotateX += (targetRotateX - currentRotateX) * 0.1;
+            currentRotateY += (targetRotateY - currentRotateY) * 0.1;
+            parallaxContent.style.transform = `rotateX(${currentRotateX}deg) rotateY(${currentRotateY}deg)`;
+
+            requestAnimationFrame(animate);
+        }
+        animate();
+
+        // ==========================================
+        // ИНТЕРАКТИВНЫЙ КЛИК / ТАП (Волна и Вибрация)
+        // ==========================================
+        const clickEvent = isTouchDevice ? 'touchstart' : 'click';
+        
+        window.addEventListener(clickEvent, (e) => {
+            // Haptic Feedback (Виброотклик для мобильных, если поддерживается)
+            if (isTouchDevice && navigator.vibrate) {
+                navigator.vibrate(50); // Легкая короткая вибрация 50мс
+            }
+
+            const ripple = document.createElement('div');
+            ripple.classList.add('click-ripple');
+            
+            // Получаем координаты для ПК или для Телефона
+            let clientX = isTouchDevice ? e.touches[0].clientX : e.clientX;
+            let clientY = isTouchDevice ? e.touches[0].clientY : e.clientY;
+
+            ripple.style.left = `${clientX}px`;
+            ripple.style.top = `${clientY}px`;
+            
+            document.body.appendChild(ripple);
+
+            setTimeout(() => { ripple.remove(); }, 800);
+            
+            // Эффект "вдавливания" контента
+            parallaxContent.style.transition = 'transform 0.1s ease-out';
+            parallaxContent.style.transform = `scale(0.95) rotateX(${currentRotateX}deg) rotateY(${currentRotateY}deg)`;
+            
+            setTimeout(() => {
+                parallaxContent.style.transform = `scale(1) rotateX(${currentRotateX}deg) rotateY(${currentRotateY}deg)`;
+                setTimeout(() => {
+                    parallaxContent.style.transition = 'none'; // Отключаем CSS-transition, чтобы скрипт снова перехватил управление
+                }, 100);
+            }, 100);
+        });
+
+        // Центрирование при ресайзе
+        window.addEventListener('resize', () => {
+            if (!isTouchDevice) {
+                mouseX = window.innerWidth / 2;
+                mouseY = window.innerHeight / 2;
+            }
+        });
+    </script>
+</body>
+</html>
